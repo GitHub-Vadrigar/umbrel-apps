@@ -2,6 +2,7 @@ manifestVersion: 1
 id: vadrigar-nerva
 name: Nerva
 tagline: Run your own Nerva node
+icon: https://github.com/GitHub-Vadrigar/umbrel-apps/blob/709c6818e1446a6b5eff435bdd671b273cea6013/vadrigar-nerva/app/logo.png
 category: crypto
 version: "0.1.3"
 port: 3000
