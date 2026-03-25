@@ -8,7 +8,8 @@ echo "Starting Nerva daemon..."
   --p2p-bind-port=17565 \
   --rpc-bind-ip=0.0.0.0 \
   --rpc-bind-port=17566 \
-  --confirm-external-bind &
+  --confirm-external-bind \
+  --rpc-access-control-origins=* &
 
 echo "Waiting for nervad..."
 
