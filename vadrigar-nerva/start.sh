@@ -4,6 +4,8 @@ echo "Starting Nerva daemon..."
 
 /nerva/nervad \
   --data-dir=/data/nerva \
+  --p2p-bind-ip=0.0.0.0 \
+  --p2p-bind-port=17565 \
   --rpc-bind-ip=0.0.0.0 \
   --rpc-bind-port=17566 \
   --confirm-external-bind &
