@@ -1,7 +1,6 @@
 id: nerva
 name: Nerva
 tagline: Run your own Nerva node
-icon: logo.png
 category: crypto
 version: "0.1.3"
 
