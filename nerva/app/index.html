@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Nerva Node</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <img src="logo.png" class="logo">
+    <h2>Nerva</h2>
+
+    <div class="nav">
+      <button onclick="showTab('overview')">Overview</button>
+      <button onclick="showTab('peersTab')">Peers</button>
+      <button onclick="showTab('blocksTab')">Blocks</button>
+      <button onclick="showTab('miningTab')">Mining</button>
+      <button onclick="showTab('settingsTab')">Settings</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div id="overview" class="tab active">
+
+      <h1>Nerva Node</h1>
+      <div id="statusDot"></div>
+
+      <div class="card">
+        <h2 id="status">Loading...</h2>
+
+        <div class="progress-bar">
+          <div id="progress"></div>
+        </div>
+
+        <p id="syncText"></p>
+      </div>
+
+      <div class="grid">
+        <div class="card"><h3>Height</h3><p id="height"></p></div>
+        <div class="card"><h3>Peers</h3><p id="peerCount"></p></div>
+        <div class="card"><h3>Transactions</h3><p id="tx"></p></div>
+        <div class="card"><h3>Difficulty</h3><p id="difficulty"></p></div>
+        <div class="card"><h3>Mempool</h3><p id="mempool"></p></div>
+        <div class="card"><h3>Network</h3><p id="nettype"></p></div>
+        <div class="card"><h3>ETA</h3><p id="eta"></p></div>
+      </div>
+
+    </div>
+
+    <!-- PEERS -->
+    <div id="peersTab" class="tab">
+      <div class="card">
+        <h2>Peers</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>IP</th>
+              <th>Dir</th>
+              <th>Height</th>
+              <th>Ping</th>
+            </tr>
+          </thead>
+          <tbody id="peerTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BLOCKS -->
+    <div id="blocksTab" class="tab">
+      <div class="card">
+        <h2>Latest Blocks</h2>
+        <div id="blocksList"></div>
+      </div>
+    </div>
+
+    <!-- MINING -->
+    <div id="miningTab" class="tab">
+      <div class="card">
+        <h2>Mining</h2>
+        <button onclick="startMining()">Start Mining</button>
+        <button onclick="stopMining()">Stop Mining</button>
+        <p id="miningStatus">Idle</p>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="settingsTab" class="tab">
+      <div class="card">
+        <h2>Settings</h2>
+
+        <button onclick="showConnect()">Connect Wallet</button>
+
+        <h3>Disk Usage</h3>
+        <p id="disk"></p>
+
+        <h3>RPC</h3>
+        <p>Port: 17566</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
