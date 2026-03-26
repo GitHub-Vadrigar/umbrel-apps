@@ -8,4 +8,4 @@ services:
       - "17566:17566"   # RPC ONLY
 
     volumes:
-      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/data/monero:/root/.nerva
