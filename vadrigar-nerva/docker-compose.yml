@@ -1,8 +1,10 @@
 services:
   nerva:
-    build: .
     container_name: nerva
-    user: "1000:1000"
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    
     restart: unless-stopped
 
     ports:
