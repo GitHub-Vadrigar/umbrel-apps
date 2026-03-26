@@ -2,6 +2,7 @@ services:
   nerva:
     build: .
     container_name: nerva
+    user: "1000:1000"
     restart: unless-stopped
 
     ports:
