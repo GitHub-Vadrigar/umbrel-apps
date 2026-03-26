@@ -2,9 +2,9 @@ services:
   nerva:
     container_name: nerva
     build:
-      context: .
+      context: ./vadrigar-nerva
       dockerfile: ./Dockerfile
-    
+
     restart: unless-stopped
 
     ports:
