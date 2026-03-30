@@ -6,7 +6,7 @@ function showTab(tab) {
 // SAFE RPC
 async function rpc(method, params = {}) {
   try {
-    const res = await fetch("http://umbrel.local:17566/json_rpc", {
+    const res = await fetch("/json_rpc", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
