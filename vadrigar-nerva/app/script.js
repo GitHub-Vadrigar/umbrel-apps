@@ -147,7 +147,7 @@ async function stopMining() {
 
 // SYSTEM
 async function updateSystem() {
-  const res = await fetch("/system");
+  const res = await fetch("/json_rpc");
   const d = await res.json();
 
   function gb(x){ return (x / 1e9).toFixed(1) + " GB"; }
