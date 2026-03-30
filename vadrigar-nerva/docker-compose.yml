@@ -1,10 +1,9 @@
 services:
   nervad:
-    user: nerva
-    volumes:
-      - ${APP_DATA_DIR}/data/nerva:/home/nerva/.nerva
     image: sn1f3rt/nerva:latest@sha256:888417ae11481476ecde6b38a45b8300fe9c8e21d053c72f0d4e903b7282c7a2
     restart: unless-stopped
     ports:
       - "17566:17566"
       - "17565:17565"
+    volumes:
+      - ${APP_DATA_DIR}/data/nerva:/home/nerva/.nerva
