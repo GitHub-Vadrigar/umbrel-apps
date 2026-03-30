@@ -1,14 +1,14 @@
 services:
-  nerva:
-    container_name: nerva
-    build:
-      context: ./vadrigar-nerva
-      dockerfile: ./Dockerfile
-
-    restart: unless-stopped
-
+  nervad:
+    image: sn1f3rt/nerva:latest@sha256:888417ae11481476ecde6b38a45b8300fe9c8e21d053c72f0d4e903b7282c7a2
+    restart: on-failure
     ports:
-      - "17566:17566"   # RPC ONLY
-
+      - "17566:17566"
+      - "17565:17565"
     volumes:
-      - ${APP_DATA_DIR}/data/nerva:/root/.nerva
+      - ${APP_DATA_DIR}/data:/data
+    command: >
+      sn1f3rt/nerva
+      --data-dir=/data
+      --confirm-external-bind
+      --non-interactive
