@@ -1,7 +1,7 @@
 services:
   app_proxy:
     environment:
-      APP_HOST: ${APP_ID}_web
+      APP_HOST: ${APP_ID}_web_1
       APP_PORT: 80
   
   nervad:
