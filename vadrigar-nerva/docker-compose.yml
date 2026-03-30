@@ -17,6 +17,6 @@ services:
     ports:
       - "17578:80"
     volumes:
-      - ./app:/usr/share/nginx/html:ro
+      - ${APP_DATA_DIR}/app:/usr/share/nginx/html:ro
     depends_on:
       - nervad
