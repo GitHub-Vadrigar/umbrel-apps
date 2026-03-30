@@ -6,14 +6,4 @@ services:
       - "17566:17566"
       - "17565:17565"
     volumes:
-      - ${APP_DATA_DIR}/data:/data
-    command: >
-      exit
-      nervad
-      --data-dir=/data
-      --p2p-bind-ip=0.0.0.0 \
-      --p2p-bind-port=17565 \
-      --rpc-bind-ip=0.0.0.0
-      --rpc-bind-port=17566
-      --confirm-external-bind
-      --non-interactive
+      - ${APP_DATA_DIR}/data/nerva:/home/nerva/.nerva
