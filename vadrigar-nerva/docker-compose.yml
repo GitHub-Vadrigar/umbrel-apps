@@ -1,9 +1,4 @@
 services:
-  app_proxy:
-    environment:
-      APP_HOST: vadrigar-nerva_web_1
-      APP_PORT: 17578
-  
   nervad:
     user: "1000:1000"
     restart: unless-stopped
