@@ -1,6 +1,8 @@
-function showTab(tab) {
+function showTab(tabId) {
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  document.getElementById(tab).classList.add("active");
+  document.getElementById(tabId).classList.add("active");
+  document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active-nav"));
+  if (event) event.currentTarget.classList.add("active-nav");
 }
 
 // SAFE RPC
@@ -16,161 +18,253 @@ async function rpc(method, params = {}) {
         params
       })
     });
-
-    const data = await res.json();
-
-    if (data.error) return null;
-
-    return data;
-
+    return await res.json();
   } catch {
     return null;
   }
 }
 
-// OVERVIEW
+// DIRECT HTTP RPC (mining commands)
+async function rpcDirect(endpoint, body = {}) {
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body)
+    });
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+// CHECK FOR UPDATES
+async function checkForUpdates(currentVersion) {
+  try {
+    const res = await fetch("https://api.github.com/repos/nerva-project/nerva/releases/latest");
+    if (!res.ok) return;
+    const data = await res.json();
+    const latestVersion = data.tag_name.replace(/[vV]/g, '');
+    const cleanCurrent = currentVersion.replace(/[vV]/g, '');
+
+    if (cleanCurrent !== latestVersion && !cleanCurrent.startsWith(latestVersion)) {
+      const icon = document.getElementById("updateIcon");
+      const text = document.getElementById("updateTooltipText");
+      if (icon && text) {
+        icon.style.display = "inline-block";
+        text.innerText = `New Nerva Deamon version available: v${latestVersion}. This update will be included in the next app release.`;
+      }
+    }
+  } catch (e) {
+    console.error("Update check failed", e);
+  }
+}
+
+// HELPERS
+function formatTime(seconds) {
+  if (seconds === Infinity || isNaN(seconds) || seconds < 0) return "Calculating...";
+  if (seconds === 0) return "Synced";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  return h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+}
+
+function timeAgo(timestamp) {
+  const seconds = Math.floor(Date.now() / 1000 - timestamp);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function formatHashrate(hashes) {
+  if (hashes === 0) return '0 H/s';
+  const k = 1000;
+  const sizes = ['H/s', 'kH/s', 'MH/s'];
+  const i = Math.floor(Math.log(hashes) / Math.log(k));
+  return parseFloat((hashes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function formatNumber(num) {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+// OVERVIEW & BLOCKCHAIN
 let lastHeight = 0;
 let lastTime = Date.now();
 
 async function updateOverview() {
   const data = await rpc("get_info");
-  if (!data) return;
+  const badge = document.getElementById("statusBadge");
+  const statusText = document.getElementById("statusText");
+
+  if (!data || !data.result) {
+    if (badge) badge.className = "status-badge status-offline";
+    if (statusText) statusText.innerText = "Offline";
+    return;
+  }
 
   const r = data.result;
 
-  document.getElementById("height").innerText = r.height;
-  document.getElementById("peerCount").innerText =
-    r.incoming_connections_count + r.outgoing_connections_count;
-  document.getElementById("tx").innerText = r.tx_count;
-  document.getElementById("difficulty").innerText = r.difficulty;
-  document.getElementById("mempool").innerText = r.tx_pool_size;
-  document.getElementById("nettype").innerText = r.nettype;
-
-  // Progress
-  let percent = 0;
-  if (r.target_height > 0) {
-    percent = (r.height / r.target_height) * 100;
+  // 1. Update Header Status Badge
+  if (badge) badge.className = "status-badge status-online";
+  if (statusText) statusText.innerText = "Online";
+  if (r.version) {
+	document.getElementById("coreVersion").innerText = "Nerva Daemon v" + r.version;
+	if (!window.updateCheckDone) {
+	  checkForUpdates(r.version);
+	  window.updateCheckDone = true;
+	}
   }
 
-  document.getElementById("progress").style.width = percent + "%";
-  document.getElementById("syncText").innerText =
-    percent.toFixed(2) + "% synced";
+  // 2. Stats Grid
+  const netHashrate = r.difficulty ? r.difficulty / 60 : 0;
+  document.getElementById("netHash").innerText = formatHashrate(netHashrate);
+  document.getElementById("dbSize").innerText = r.database_size ? formatBytes(r.database_size) : "-";
+  document.getElementById("peerCount").innerText = (r.incoming_connections_count || 0) + (r.outgoing_connections_count || 0);
+  document.getElementById("difficulty").innerText = formatNumber(r.difficulty || 0);
+  
+  const txPoolCount = r.tx_pool_size || 0;
+  document.getElementById("mempool").innerText = txPoolCount + (txPoolCount === 1 ? " TX" : " TXs");
+  document.getElementById("mempoolTooltip").innerText = txPoolCount + " transactions in mempool";
 
-  // ETA
-  const now = Date.now();
-  const deltaH = r.height - lastHeight;
-  const deltaT = (now - lastTime) / 1000;
-
-  if (deltaH > 0 && r.target_height > 0) {
-    const speed = deltaH / deltaT;
-    const remaining = r.target_height - r.height;
-    const eta = Math.floor(remaining / speed);
-
-    document.getElementById("eta").innerText = eta + " sec";
+  // 3. Blockchain Card Sync Logic
+  const actualHeight = r.height || 0;
+  let target = r.target_height > 0 ? r.target_height : actualHeight;
+  let percent = target > 0 ? (actualHeight / target) * 100 : 0;
+  
+  let tooltipText = actualHeight >= target ? `Net height: ${formatNumber(actualHeight)}` : `Height: ${formatNumber(actualHeight)} / ${formatNumber(target)}`;
+  let tooltipHTML = `<span class="tooltip-container">i<span class="tooltip-text">${tooltipText}</span></span>`;
+  
+  const syncEl = document.getElementById("syncText");
+  if (actualHeight >= target && target > 0) {
+    syncEl.innerHTML = "100.00% synced " + tooltipHTML;
+    document.getElementById("progress").style.width = "100%";
+    document.getElementById("eta").innerText = "Synced";
+  } else {
+    syncEl.innerHTML = percent.toFixed(2) + "% synced " + tooltipHTML;
+    document.getElementById("progress").style.width = percent + "%";
+    
+    // ETA
+    const now = Date.now();
+    const deltaH = actualHeight - lastHeight;
+    const deltaT = (now - lastTime) / 1000;
+    if (deltaH > 0) {
+      const speed = deltaH / deltaT;
+      const remaining = target - actualHeight;
+      document.getElementById("eta").innerText = formatTime(Math.floor(remaining / speed));
+    }
   }
 
-  lastHeight = r.height;
-  lastTime = now;
+  if (actualHeight > lastHeight) {
+    lastHeight = actualHeight;
+    lastTime = Date.now();
+  }
+
+  // 4. Update blockrow
+  updateRecentBlocks(actualHeight);
 }
 
-// PEERS
-async function updatePeers() {
-  const data = await rpc("get_connections");
-  if (!data || !data.result) return;
-
-  let html = "";
-
-  data.result.connections.forEach(p => {
-    html += `
-      <tr>
-        <td>${p.address}</td>
-        <td>${p.incoming ? "IN" : "OUT"}</td>
-        <td>${p.height}</td>
-        <td>${p.ping}</td>
-      </tr>
-    `;
-  });
-
-  document.getElementById("peerTable").innerHTML = html;
-}
-
-// BLOCKS
-async function updateBlocks() {
-  const info = await rpc("get_info");
-  if (!info) return;
-
-  const height = info.result.height;
-  const start = Math.max(0, height - 10);
-
+// RECENT BLOCKS
+async function updateRecentBlocks(currentHeight) {
+  if (currentHeight <= 0) return;
+  
+  const start = Math.max(0, currentHeight - 6);
   const data = await rpc("get_block_headers_range", {
     start_height: start,
-    end_height: height
+    end_height: currentHeight - 1
   });
 
-  if (!data || !data.result) return;
+  if (!data || !data.result || !data.result.headers) return;
 
   let html = "";
+  const blocks = data.result.headers.reverse().slice(0, 6);
 
-  data.result.headers.reverse().forEach(b => {
+  blocks.forEach(b => {
     html += `
-      <div class="block">
-        #${b.height} • TX: ${b.num_txes}
+      <div class="block-square">
+        <div class="block-number">${formatNumber(b.height)}</div>
+        <div class="block-info">
+          <span>TXs: <strong>${b.num_txes}</strong></span>
+          <span>Size: <strong>${formatBytes(b.block_size || 0)}</strong></span>
+          <span>Found: <strong>${timeAgo(b.timestamp)}</strong></span>
+        </div>
       </div>
     `;
   });
 
-  document.getElementById("blocksList").innerHTML = html;
+  const row = document.getElementById("blocksRow");
+  if (row) row.innerHTML = html;
 }
 
-// MINING
-async function startMining() {
-  const address = prompt("Enter Nerva address:");
-  if (!address) return;
+// PEERS & MINING
+async function updatePeers() {
+  const data = await rpc("get_connections");
+  if (!data || !data.result || !data.result.connections) return;
 
-  const res = await rpc("start_mining", {
-    miner_address: address,
-    threads_count: 1
+  let html = "";
+  data.result.connections.forEach(p => {
+    html += `<tr><td>${p.address}</td><td>${p.incoming ? "IN" : "OUT"}</td><td>${formatNumber(p.height)}</td></tr>`;
   });
+  document.getElementById("peerTable").innerHTML = html || "<tr><td colspan='3'>No peers.</td></tr>";
+}
 
-  if (!res) {
-    alert("Mining failed");
-    return;
+async function updateMiningStatus() {
+  const data = await rpcDirect("/mining_status");
+  const statusEl = document.getElementById("miningStatus");
+  if (!statusEl) return;
+
+  if (data && data.status === "OK") {
+    statusEl.innerText = data.active ? `Active (${data.threads_count} threads)` : "Idle";
+    statusEl.style.color = data.active ? "#2ea043" : "#8b949e";
+    document.getElementById("miningSpeed").innerText = formatHashrate(data.speed || 0);
+    document.getElementById("miningTarget").innerText = data.address || "-";
   }
+}
 
-  document.getElementById("miningStatus").innerText = "Mining active";
+async function startMining() {
+  const addr = document.getElementById("mineAddress").value.trim();
+  const threads = parseInt(document.getElementById("mineThreads").value) || 1;
+  if (!addr) return alert("Enter address");
+  
+  localStorage.setItem("nerva_wallet", addr);
+  const res = await rpcDirect("/start_mining", { miner_address: addr, threads_count: threads });
+  if (res && res.status === "OK") updateMiningStatus();
+  else alert("Error starting mining. Is the node synced?");
 }
 
 async function stopMining() {
-  await rpc("stop_mining");
-  document.getElementById("miningStatus").innerText = "Stopped";
+  await rpcDirect("/stop_mining");
+  updateMiningStatus();
 }
 
-// SYSTEM
-async function updateSystem() {
-  const res = await fetch("/json_rpc");
-  const d = await res.json();
+// INIT
+function initializeSettings() {
+  const host = window.location.hostname;
+  const nodeDisp = document.getElementById("nodeIpDisplay");
+  if (nodeDisp) nodeDisp.innerText = `${host}:17566`;
 
-  function gb(x){ return (x / 1e9).toFixed(1) + " GB"; }
-
-  document.getElementById("disk").innerText =
-    `${gb(d.used)} / ${gb(d.total)}`;
+  const savedWallet = localStorage.getItem("nerva_wallet");
+  if (savedWallet) document.getElementById("mineAddress").value = savedWallet;
 }
 
-// CONNECT
-function showConnect() {
-  const url = window.location.hostname;
-  alert(`RPC Endpoint:\nhttp://${url}:17566`);
+async function pollData() {
+  await updateOverview();
+  await updatePeers();
+  await updateMiningStatus();
+  setTimeout(pollData, 5000);
 }
 
-// LOOP
-setInterval(() => {
-  updateOverview();
-  updatePeers();
-  updateBlocks();
-  updateSystem();
-}, 5000);
-
-updateOverview();
-updatePeers();
-updateBlocks();
-updateSystem();
+initializeSettings();
+pollData();
