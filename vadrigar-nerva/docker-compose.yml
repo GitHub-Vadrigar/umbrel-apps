@@ -8,7 +8,7 @@ services:
     user: "1000:1000"
     restart: unless-stopped
     command: --p2p-bind-ip=0.0.0.0 --p2p-bind-port=17565 --rpc-bind-ip=0.0.0.0 --rpc-bind-port=17566 --non-interactive --confirm-external-bind --data-dir=/data/nerva --log-level 0
-    image: sn1f3rt/nerva:latest@sha256:888417ae11481476ecde6b38a45b8300fe9c8e21d053c72f0d4e903b7282c7a2
+    image: sn1f3rt/nerva:v0.2.0.0@sha256:888417ae11481476ecde6b38a45b8300fe9c8e21d053c72f0d4e903b7282c7a2
     ports:
       - "17565:17565"
       - "17566:17566"
