@@ -1,4 +1,4 @@
-## Vadrigar's Community App Store
+## Vadrigar's Umbrel Community App Store
 
 Welcome to my Umbrel community app store!
 
